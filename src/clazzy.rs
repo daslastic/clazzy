@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tokio::time::{self, Duration, Interval};
 
-use crate::clazz::Clazz;
+use crate::data::clazz::Clazz;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum ClazzTool {

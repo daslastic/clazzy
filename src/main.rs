@@ -1,13 +1,12 @@
-pub mod clazz;
 pub mod clazzy;
+pub mod data;
 pub mod manclazz;
-pub mod raw_clazz;
 
 use std::error::Error;
 
 pub use clazzy::{ClazzTool, Clazzy};
 
-use raw_clazz::{serialize_her, DeserializationError};
+use data::raw_clazz::{serialize_her, DeserializationError};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -15,7 +14,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let f = format!("{}/{}.ron", env!("CARGO_MANIFEST_DIR"), "conf");
     match serialize_her(f) {
-        Ok(raw_clazz) => match clazz::make_clazz(raw_clazz) {
+        Ok(raw_clazz) => match data::clazz::make_clazz(raw_clazz) {
             Ok(clazzy) => {
                 let mut context = Clazzy::new(clazzy, 10);
                 loop {

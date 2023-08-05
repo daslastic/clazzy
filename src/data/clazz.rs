@@ -1,4 +1,4 @@
-use crate::{raw_clazz::RawClazz, ClazzTool};
+use crate::{data::raw_clazz::RawClazz, ClazzTool};
 use chrono::{NaiveDate, NaiveTime, ParseError, Weekday};
 use std::fmt;
 
@@ -31,6 +31,7 @@ pub struct Datey {
     pub from: NaiveTime,
     pub to: NaiveTime,
 }
+
 
 pub fn make_clazz(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
     let mut semesters: Vec<Semestery> = Vec::new();
