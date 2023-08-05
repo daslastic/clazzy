@@ -1,64 +1,105 @@
-use crate::domeplz::{ClazzTool, Weekday};
-use ron::de::from_reader;
-use serde::{Deserialize, Serialize};
-use std::fs::File;
+use crate::{app::ClazzTool, raw_clazz::RawClazz};
+use chrono::{NaiveDate, NaiveTime, ParseError, Weekday};
+use std::fmt;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug)]
 pub struct Clazzy {
-    sem_id: i32,
-    time_zone: String,
-    semesters: Vec<Semester>,
+    pub sem_id: usize,
+    pub semesters: Vec<Semestery>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Semester {
-    student_name: String,
-    from: String,
-    to: String,
-    clazzes: Vec<Clazz>,
+#[derive(Debug)]
+pub struct Semestery {
+    pub from: NaiveDate,
+    pub to: NaiveDate,
+    pub clazzes: Vec<Clazz>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug)]
 pub struct Clazz {
-    tool: ClazzTool,
-    name: String,
-    password: String,
-    online: bool,
-    instructor: Option<String>,
-    instructors: Option<Vec<String>>,
-    credits: f32,
-    dates: Vec<Date>,
+    pub tool: ClazzTool,
+    pub name: String,
+    pub password: String,
+    pub online: bool,
+    pub instructor: Option<String>,
+    pub instructors: Option<Vec<String>>,
+    pub credits: f32,
+    pub dates: Vec<Datey>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Date {
-    day: Weekday,
-    from: String,
-    to: String,
-    instructors: Option<Vec<i32>>,
+#[derive(Debug)]
+pub struct Datey {
+    // day: Weekday,
+    pub from: NaiveTime,
+    pub to: NaiveTime,
+    pub instructors: Option<Vec<i32>>,
+    pub instructor: Option<String>,
+    pub tool: Option<ClazzTool>,
 }
 
-#[derive(Debug)] // sugar dady
-pub enum DeserializationError {
-    Io(std::io::Error),
-    Ron(ron::error::SpannedError),
-    Idiot(ron::error::Error),
+pub fn make_clazzy(raw_clazz: RawClazz) -> Result<Clazzy, InitProgramError> {
+    if raw_clazz.sem_id > raw_clazz.semesters.len() - 1 {
+        return Err(InitProgramError::IndexSemError(raw_clazz.sem_id));
+    }
+
+    let mut semesters: Vec<Semestery> = Vec::new();
+
+    for semester in raw_clazz.semesters.iter() {
+        let mut clazzes: Vec<Clazz> = Vec::new();
+
+        for clazz in semester.clazzes.iter() {
+            let mut dates: Vec<Datey> = Vec::new();
+
+            // for dates in clazz.dates.iter() {
+            //     dates.
+            // }
+
+            clazzes.push(Clazz {
+                tool: clazz.tool.clone(),
+                name: clazz.name.clone(),
+                password: clazz.password.clone(),
+                online: clazz.online.clone(),
+                instructor: clazz.instructor.clone(),
+                instructors: clazz.instructors.clone(),
+                credits: clazz.credits,
+                dates,
+            });
+        }
+
+        semesters.push(Semestery {
+            to: match NaiveDate::parse_from_str(&semester.to, "%b %d, %Y") {
+                Ok(s) => s,
+                Err(e) => return Err(InitProgramError::ParseSemTime(semester.to.clone(), e)),
+            },
+            from: match NaiveDate::parse_from_str(&semester.from, "%b %d, %Y") {
+                Ok(s) => s,
+                Err(e) => return Err(InitProgramError::ParseSemTime(semester.from.clone(), e)),
+            },
+            clazzes,
+        })
+    }
+
+    Ok(Clazzy {
+        sem_id: raw_clazz.sem_id,
+        semesters,
+    })
 }
 
-pub fn make_her(fpath: String) -> Result<Clazzy, DeserializationError> {
-    let file = File::open(fpath).map_err(DeserializationError::Io)?;
-    let clazzy = from_reader(file).map_err(DeserializationError::Ron)?;
+#[derive(Clone, Debug)]
+pub enum InitProgramError {
+    IndexSemError(usize),
+    ParseSemTime(String, ParseError),
+}
 
-    // println!(
-    //     "Hot RON: {}",
-    //     ron::ser::to_string_pretty(&clazzy, ron::ser::PrettyConfig::default())
-    //         .map_err(DeserializationError::Idiot)?,
-    // );
-
-    println!(
-        "RON: {}",
-        ron::to_string(&clazzy).map_err(DeserializationError::Idiot)?
-    );
-
-    Ok(clazzy)
+impl fmt::Display for InitProgramError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self {
+            InitProgramError::IndexSemError(sem_id) => {
+                write!(f, "sem_id: {}, is invalid.", sem_id)
+            }
+            InitProgramError::ParseSemTime(s, e) => {
+                write!(f, "Invalid semester time: {}. Error: {}", s, e)
+            }
+        }
+    }
 }

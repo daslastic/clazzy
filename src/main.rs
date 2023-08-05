@@ -1,13 +1,17 @@
+pub mod app;
 pub mod clazzy;
-pub mod domeplz;
+pub mod raw_clazz;
 
-use clazzy::{make_her, DeserializationError};
+use crate::raw_clazz::{serialize_her, DeserializationError};
 
 fn main() {
     let f = format!("{}/clazzy.ron", env!("CARGO_MANIFEST_DIR"));
     println!("{}", &f);
-    match make_her(f) {
-        Ok(x) => domeplz::become_cool(x),
+    match serialize_her(f) {
+        Ok(raw_clazz) => match clazzy::make_clazzy(raw_clazz) {
+            Err(e) => println!("{}", e),
+            Ok(r) => {}
+        },
         Err(e) => match e {
             DeserializationError::Io(e) => {
                 println!(
