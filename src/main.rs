@@ -1,33 +1,52 @@
-pub mod app;
+pub mod clazz;
 pub mod clazzy;
+pub mod manclazz;
 pub mod raw_clazz;
 
-use crate::raw_clazz::{serialize_her, DeserializationError};
+use std::error::Error;
 
-fn main() {
-    let f = format!("{}/clazzy.ron", env!("CARGO_MANIFEST_DIR"));
-    println!("{}", &f);
+pub use clazzy::{ClazzTool, Clazzy};
+
+use raw_clazz::{serialize_her, DeserializationError};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    simple_logger::init_with_level(log::Level::Info).expect("Failed to start logger.");
+
+    let f = format!("{}/{}.ron", env!("CARGO_MANIFEST_DIR"), "conf");
     match serialize_her(f) {
-        Ok(raw_clazz) => match clazzy::make_clazzy(raw_clazz) {
-            Err(e) => println!("{}", e),
-            Ok(r) => {}
+        Ok(raw_clazz) => match clazz::make_clazz(raw_clazz) {
+            Ok(clazzy) => {
+                let mut context = Clazzy::new(clazzy, 10);
+                loop {
+                    context.interval.tick().await;
+                    run(&mut context).await;
+                }
+            }
+            Err(e) => log::error!("{}", e),
         },
         Err(e) => match e {
             DeserializationError::Io(e) => {
-                println!(
+                log::error!(
                     "Wow, your either bad at cd or r stupid. Guess which one(s): {}",
                     e
                 );
             }
             DeserializationError::Ron(e) => {
-                println!(
+                log::error!(
                     "Failed to load hotty, maybe be more careful with your syntax: {}",
                     e
                 );
             }
             DeserializationError::Idiot(e) => {
-                println!("bruh how: {}", e);
+                log::error!("bruh how: {}", e);
             }
         },
     };
+
+    Ok(())
+}
+
+async fn run(clazzy: &mut Clazzy) {
+    // manclazz::check_time(clazzy);
 }

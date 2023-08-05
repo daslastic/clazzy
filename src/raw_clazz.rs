@@ -1,4 +1,4 @@
-use crate::app::ClazzTool;
+use crate::ClazzTool;
 use ron::de::from_reader;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -7,7 +7,6 @@ use chrono::Weekday;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RawClazz {
-    pub sem_id: usize,
     pub semesters: Vec<Semester>,
 }
 
@@ -15,11 +14,11 @@ pub struct RawClazz {
 pub struct Semester {
     pub from: String,
     pub to: String,
-    pub clazzes: Vec<Clazz>,
+    pub classes: Vec<Class>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct Clazz {
+pub struct Class {
     pub tool: ClazzTool,
     pub name: String,
     pub code: String,
@@ -27,18 +26,14 @@ pub struct Clazz {
     pub online: bool,
     pub credits: f32,
     pub dates: Vec<Date>,
-    pub instructor: Option<String>,
-    pub instructors: Option<Vec<String>>,
+    pub instructors: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Date {
-    // day: Weekday,
-    from: String,
-    to: String,
-    instructors: Option<Vec<i32>>,
-    instructor: Option<String>,
-    tool: Option<ClazzTool>,
+    pub day: Weekday,
+    pub from: String,
+    pub to: String,
 }
 
 #[derive(Debug)] // sugar dady

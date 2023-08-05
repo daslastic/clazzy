@@ -1,105 +1,49 @@
-use crate::{app::ClazzTool, raw_clazz::RawClazz};
-use chrono::{NaiveDate, NaiveTime, ParseError, Weekday};
-use std::fmt;
+use serde::{Deserialize, Serialize};
+use tokio::time::{self, Duration, Interval};
 
-#[derive(Debug)]
+use crate::clazz::Clazz;
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum ClazzTool {
+    Zoom,
+    GoogleMeets,
+}
+
+#[derive(Debug, Clone)]
+pub enum ClazzState {
+    None,
+    Error,
+    Stagnet,
+    Incoming,
+    JoiningClass,
+    Disconnected,
+}
+
 pub struct Clazzy {
-    pub sem_id: usize,
-    pub semesters: Vec<Semestery>,
+    pub clazz: Clazz,
+    pub duration: Duration,
+    pub interval: Interval,
+    pub state: ClazzState,
+    pub sem_id: Option<usize>,
 }
 
-#[derive(Debug)]
-pub struct Semestery {
-    pub from: NaiveDate,
-    pub to: NaiveDate,
-    pub clazzes: Vec<Clazz>,
-}
-
-#[derive(Debug)]
-pub struct Clazz {
-    pub tool: ClazzTool,
-    pub name: String,
-    pub password: String,
-    pub online: bool,
-    pub instructor: Option<String>,
-    pub instructors: Option<Vec<String>>,
-    pub credits: f32,
-    pub dates: Vec<Datey>,
-}
-
-#[derive(Debug)]
-pub struct Datey {
-    // day: Weekday,
-    pub from: NaiveTime,
-    pub to: NaiveTime,
-    pub instructors: Option<Vec<i32>>,
-    pub instructor: Option<String>,
-    pub tool: Option<ClazzTool>,
-}
-
-pub fn make_clazzy(raw_clazz: RawClazz) -> Result<Clazzy, InitProgramError> {
-    if raw_clazz.sem_id > raw_clazz.semesters.len() - 1 {
-        return Err(InitProgramError::IndexSemError(raw_clazz.sem_id));
-    }
-
-    let mut semesters: Vec<Semestery> = Vec::new();
-
-    for semester in raw_clazz.semesters.iter() {
-        let mut clazzes: Vec<Clazz> = Vec::new();
-
-        for clazz in semester.clazzes.iter() {
-            let mut dates: Vec<Datey> = Vec::new();
-
-            // for dates in clazz.dates.iter() {
-            //     dates.
-            // }
-
-            clazzes.push(Clazz {
-                tool: clazz.tool.clone(),
-                name: clazz.name.clone(),
-                password: clazz.password.clone(),
-                online: clazz.online.clone(),
-                instructor: clazz.instructor.clone(),
-                instructors: clazz.instructors.clone(),
-                credits: clazz.credits,
-                dates,
-            });
-        }
-
-        semesters.push(Semestery {
-            to: match NaiveDate::parse_from_str(&semester.to, "%b %d, %Y") {
-                Ok(s) => s,
-                Err(e) => return Err(InitProgramError::ParseSemTime(semester.to.clone(), e)),
-            },
-            from: match NaiveDate::parse_from_str(&semester.from, "%b %d, %Y") {
-                Ok(s) => s,
-                Err(e) => return Err(InitProgramError::ParseSemTime(semester.from.clone(), e)),
-            },
-            clazzes,
-        })
-    }
-
-    Ok(Clazzy {
-        sem_id: raw_clazz.sem_id,
-        semesters,
-    })
-}
-
-#[derive(Clone, Debug)]
-pub enum InitProgramError {
-    IndexSemError(usize),
-    ParseSemTime(String, ParseError),
-}
-
-impl fmt::Display for InitProgramError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &self {
-            InitProgramError::IndexSemError(sem_id) => {
-                write!(f, "sem_id: {}, is invalid.", sem_id)
-            }
-            InitProgramError::ParseSemTime(s, e) => {
-                write!(f, "Invalid semester time: {}. Error: {}", s, e)
-            }
+impl Clazzy {
+    pub fn new(clazz: Clazz, update_interval: u64) -> Self {
+        let duration = Duration::from_secs(update_interval);
+        Self {
+            clazz,
+            duration,
+            interval: time::interval(duration),
+            state: ClazzState::None,
+            sem_id: None,
         }
     }
+
+    // pub fn get_sem(&self) -> &Semestery {
+    //     &self.clazzy.semesters[self.clazzy.sem_id]
+    // }
+    //
+    // pub fn get_sem_mut(&mut self) -> &mut Semestery {
+    //     &mut self.clazzy.semesters[self.clazzy.sem_id]
+    // }
 }
