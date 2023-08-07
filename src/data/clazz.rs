@@ -1,6 +1,6 @@
 use crate::{data::raw_clazz::RawClazz, ClazzTool};
 use chrono::{NaiveDate, NaiveTime, ParseError, Weekday};
-use std::fmt;
+use std::{error::Error, fmt};
 
 #[derive(Debug, Clone)]
 pub struct Clazz {
@@ -32,8 +32,7 @@ pub struct Datey {
     pub to: NaiveTime,
 }
 
-
-pub fn make_clazz(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
+pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
     let mut semesters: Vec<Semestery> = Vec::new();
 
     for raw_semester in raw_clazz.semesters.iter() {
@@ -47,11 +46,11 @@ pub fn make_clazz(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
                     day: raw_date.day,
                     from: match NaiveTime::parse_from_str(&raw_date.from, "%H:%M") {
                         Ok(s) => s,
-                        Err(e) => return Err(ClazzError::ParseClazzTime(raw_date.from.clone(), e)),
+                        Err(e) => return Err(ClazzError::ParseClassTime(raw_date.from.clone(), e)),
                     },
                     to: match NaiveTime::parse_from_str(&raw_date.to, "%H:%M") {
                         Ok(s) => s,
-                        Err(e) => return Err(ClazzError::ParseClazzTime(raw_date.to.clone(), e)),
+                        Err(e) => return Err(ClazzError::ParseClassTime(raw_date.to.clone(), e)),
                     },
                 })
             }
@@ -86,8 +85,10 @@ pub fn make_clazz(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
 #[derive(Clone, Debug)]
 pub enum ClazzError {
     ParseSemTime(String, ParseError),
-    ParseClazzTime(String, ParseError),
+    ParseClassTime(String, ParseError),
 }
+
+impl Error for ClazzError {}
 
 impl fmt::Display for ClazzError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -95,9 +96,10 @@ impl fmt::Display for ClazzError {
             ClazzError::ParseSemTime(s, e) => {
                 write!(f, "Invalid semester time: {}. Error: {}.", s, e)
             }
-            ClazzError::ParseClazzTime(s, e) => {
+            ClazzError::ParseClassTime(s, e) => {
                 write!(f, "Invalid class time: {}. Error: {}.", s, e)
             }
         }
     }
 }
+

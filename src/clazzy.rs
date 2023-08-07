@@ -1,7 +1,7 @@
+use chrono::Local;
 use serde::{Deserialize, Serialize};
-use tokio::time::{self, Duration, Interval};
 
-use crate::data::clazz::Clazz;
+use crate::data::clazz::{Clazz, Semestery};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum ClazzTool {
@@ -9,41 +9,34 @@ pub enum ClazzTool {
     GoogleMeets,
 }
 
-#[derive(Debug, Clone)]
-pub enum ClazzState {
-    None,
-    Error,
-    Stagnet,
-    Incoming,
-    JoiningClass,
-    Disconnected,
-}
-
+#[derive(Clone)]
 pub struct Clazzy {
     pub clazz: Clazz,
-    pub duration: Duration,
-    pub interval: Interval,
-    pub state: ClazzState,
     pub sem_id: Option<usize>,
 }
 
 impl Clazzy {
-    pub fn new(clazz: Clazz, update_interval: u64) -> Self {
-        let duration = Duration::from_secs(update_interval);
-        Self {
+    pub fn new(clazz: Clazz) -> Self {
+        let mut s = Self {
             clazz,
-            duration,
-            interval: time::interval(duration),
-            state: ClazzState::None,
             sem_id: None,
+        };
+
+        s.sem_id = is_semester(&s);
+        s
+    }
+}
+
+pub fn is_semester(clazzy: &Clazzy) -> Option<usize> {
+    let now = Local::now().naive_local().date();
+    for (i, sem) in clazzy.clazz.semesters.iter().enumerate() {
+        if now >= sem.from && now <= sem.to {
+            if clazzy.sem_id.is_none() || clazzy.sem_id.is_some() && i != clazzy.sem_id.unwrap() {
+                log::info!("Semester {}, is active. ({}/{})", i, sem.from, sem.to);
+            }
+            return Some(i);
         }
     }
-
-    // pub fn get_sem(&self) -> &Semestery {
-    //     &self.clazzy.semesters[self.clazzy.sem_id]
-    // }
-    //
-    // pub fn get_sem_mut(&mut self) -> &mut Semestery {
-    //     &mut self.clazzy.semesters[self.clazzy.sem_id]
-    // }
+    log::info!("No semester applies to today :)");
+    None
 }

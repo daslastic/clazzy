@@ -1,7 +1,7 @@
 use crate::ClazzTool;
 use ron::de::from_reader;
 use serde::{Deserialize, Serialize};
-use std::fs::File;
+use std::{error::Error, fmt, fs::File};
 
 use chrono::Weekday;
 
@@ -36,6 +36,12 @@ pub struct Date {
     pub to: String,
 }
 
+pub fn serialize_her(fpath: String) -> Result<RawClazz, DeserializationError> {
+    let file = File::open(fpath).map_err(DeserializationError::Io)?;
+    let raw_clazz = from_reader(file).map_err(DeserializationError::Ron)?;
+    Ok(raw_clazz)
+}
+
 #[derive(Debug)] // sugar dady
 pub enum DeserializationError {
     Io(std::io::Error),
@@ -43,19 +49,29 @@ pub enum DeserializationError {
     Idiot(ron::error::Error),
 }
 
-pub fn serialize_her(fpath: String) -> Result<RawClazz, DeserializationError> {
-    let file = File::open(fpath).map_err(DeserializationError::Io)?;
-    let clazzy = from_reader(file).map_err(DeserializationError::Ron)?;
+impl Error for DeserializationError {}
 
-    // println!(
-    //     "Hot RON: {}",
-    //     ron::ser::to_string_pretty(&clazzy, ron::ser::PrettyConfig::default())
-    //         .map_err(DeserializationError::Idiot)?,
-    // );
-    // println!(
-    //     "RON: {}",
-    //     ron::to_string(&clazzy).map_err(DeserializationError::Idiot)?
-    // );
-
-    Ok(clazzy)
+impl fmt::Display for DeserializationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self {
+            DeserializationError::Io(e) => {
+                write!(
+                    f,
+                    "Wow, your either bad at cd or r stupid. Guess which one(s): {}",
+                    e
+                )
+            }
+            DeserializationError::Ron(e) => {
+                write!(
+                    f,
+                    "Wow, your either bad at cd or r stupid. Guess which one(s): {}",
+                    e
+                )
+            }
+            DeserializationError::Idiot(e) => {
+                write!(f, "bruh how: {}", e)
+            }
+        }
+    }
 }
+
