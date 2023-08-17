@@ -1,3 +1,3 @@
 do join my school classes for me because I am lazy PLASWEASE
 
-great project for learning Rust tho
+this is a project I am working on to learn Rust

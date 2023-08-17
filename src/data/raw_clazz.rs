@@ -1,4 +1,4 @@
-use crate::ClazzTool;
+use crate::{scheduler::ProgramError, ClazzTool};
 use ron::de::from_reader;
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt, fs::File};
@@ -36,7 +36,7 @@ pub struct Date {
     pub to: String,
 }
 
-pub fn serialize_her(fpath: String) -> Result<RawClazz, DeserializationError> {
+pub fn serialize_her(fpath: String) -> Result<RawClazz, ProgramError> {
     let file = File::open(fpath).map_err(DeserializationError::Io)?;
     let raw_clazz = from_reader(file).map_err(DeserializationError::Ron)?;
     Ok(raw_clazz)
@@ -74,4 +74,3 @@ impl fmt::Display for DeserializationError {
         }
     }
 }
-

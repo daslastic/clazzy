@@ -1,4 +1,4 @@
-use crate::{data::raw_clazz::RawClazz, ClazzTool};
+use crate::{data::raw_clazz::RawClazz, scheduler::ProgramError, ClazzTool};
 use chrono::{NaiveDate, NaiveTime, ParseError, Weekday};
 use std::{error::Error, fmt};
 
@@ -32,7 +32,7 @@ pub struct Datey {
     pub to: NaiveTime,
 }
 
-pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
+pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ProgramError> {
     let mut semesters: Vec<Semestery> = Vec::new();
 
     for raw_semester in raw_clazz.semesters.iter() {
@@ -46,11 +46,13 @@ pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
                     day: raw_date.day,
                     from: match NaiveTime::parse_from_str(&raw_date.from, "%H:%M") {
                         Ok(s) => s,
-                        Err(e) => return Err(ClazzError::ParseClassTime(raw_date.from.clone(), e)),
+                        Err(e) => {
+                            return Err(ClazzError::ParseClassTime(raw_date.from.clone(), e))?
+                        }
                     },
                     to: match NaiveTime::parse_from_str(&raw_date.to, "%H:%M") {
                         Ok(s) => s,
-                        Err(e) => return Err(ClazzError::ParseClassTime(raw_date.to.clone(), e)),
+                        Err(e) => return Err(ClazzError::ParseClassTime(raw_date.to.clone(), e))?,
                     },
                 })
             }
@@ -69,11 +71,11 @@ pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
         semesters.push(Semestery {
             to: match NaiveDate::parse_from_str(&raw_semester.to, "%b %d, %Y") {
                 Ok(s) => s,
-                Err(e) => return Err(ClazzError::ParseSemTime(raw_semester.to.clone(), e)),
+                Err(e) => return Err(ClazzError::ParseSemTime(raw_semester.to.clone(), e))?,
             },
             from: match NaiveDate::parse_from_str(&raw_semester.from, "%b %d, %Y") {
                 Ok(s) => s,
-                Err(e) => return Err(ClazzError::ParseSemTime(raw_semester.from.clone(), e)),
+                Err(e) => return Err(ClazzError::ParseSemTime(raw_semester.from.clone(), e))?,
             },
             classes,
         })
@@ -102,4 +104,3 @@ impl fmt::Display for ClazzError {
         }
     }
 }
-

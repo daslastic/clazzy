@@ -8,20 +8,31 @@ pub use clazzy::{ClazzTool, Clazzy};
 use scheduler::ProgramError;
 
 #[tokio::main]
-async fn main() -> Result<(), ProgramError<'static>> {
-    simple_logger::init_with_level(log::Level::Info).expect("Failed to start logger.");
+async fn main() {
+    match start().await {
+        Ok(_) => {}
+        Err(e) => match e {
+            ProgramError::StartLogger(e) => {
+                println!("{}", e);
+            }
+            _ => {
+                log::error!("{}", e);
+            }
+        },
+    }
+}
+
+async fn start() -> Result<(), ProgramError> {
+    simple_logger::init_with_level(log::Level::Info)?;
 
     let f = format!("{}/{}.ron", env!("CARGO_MANIFEST_DIR"), "conf");
-    match data::raw_clazz::serialize_her(f) {
-        Ok(raw_clazz) => match data::clazz::make(raw_clazz) {
-            Ok(clazz) => {
-                let clazzy = Arc::new(Mutex::new(Clazzy::new(clazz)));
-                scheduler::start(clazzy).await?;
-            }
-            Err(e) => log::error!("{}", e),
-        },
-        Err(e) => log::error!("{}", e),
-    };
+    let raw_clazz = data::raw_clazz::serialize_her(f)?;
+
+    let clazz = data::clazz::make(raw_clazz)?;
+
+    let clazzy = Arc::new(Mutex::new(Clazzy::new(clazz)));
+
+    scheduler::start(clazzy).await?;
 
     Ok(())
 }

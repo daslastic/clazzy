@@ -1,97 +1,112 @@
 use std::{
     error::Error,
-    fmt::Display,
-    sync::{Arc, Mutex, MutexGuard, PoisonError},
+    fmt::{self, Pointer},
+    sync::{Arc, Mutex},
 };
 
 use crate::{
     data::{clazz::ClazzError, raw_clazz::DeserializationError},
     Clazzy,
 };
+use chrono::Timelike;
+use log::SetLoggerError;
 use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
 
-// prototype
-pub async fn start(clazzy_ref: Arc<Mutex<Clazzy>>) -> Result<(), ProgramError<'static>> {
+pub async fn start(clazzy_ref: Arc<Mutex<Clazzy>>) -> Result<(), ProgramError> {
     let scheduler = JobScheduler::new().await?;
 
-    scheduler.start().await?;
-    let clazzy = clazzy_ref.lock().unwrap();
+    let mut dates: Vec<(String, (usize, usize, usize))> = Vec::new();
 
-    for (i, class) in clazzy.clazz.semesters[clazzy.sem_id.unwrap()]
-        .classes
-        .iter()
-        .enumerate()
     {
-        for (o, date) in class.dates.iter().enumerate() {
-            let min = "*";
-            let hour = "*";
-            let day = "*";
-            let month = "*";
-            let day_of_week = date.day.to_string();
-            let str = format!("* {} {} {} {} {}", min, hour, day, month, day_of_week);
+        let clazzy = clazzy_ref.try_lock().unwrap();
+        let sem_id = clazzy.sem_id.unwrap();
+        for (i, class) in clazzy.clazz.semesters[sem_id].classes.iter().enumerate() {
+            for (o, date) in class.dates.iter().enumerate() {
+                let pos = (sem_id, i, o);
 
-            let to_clone = Arc::clone(&clazzy_ref);
-            scheduler
-                .add(Job::new(str.as_str(), move |_uuid, _l| {
-                    process_class(to_clone.clone(), (i, o));
-                })?)
-                .await?;
+                let mut min = String::new();
+                min.push_str(&date.from.minute().to_string());
+                min.push('-');
+                min.push_str(&date.to.minute().to_string());
+
+                let mut hour = String::new();
+                hour.push_str(&date.from.hour().to_string());
+                hour.push('-');
+                hour.push_str(&date.to.hour().to_string());
+
+                let str = format!("* {} {} * * {}", min, hour, date.day.to_string());
+                log::info!("{}", str);
+
+                dates.push((str, pos));
+            }
+
+            log::info!("Class '{}' is setup!", class.name);
         }
     }
+
+    for date in dates {
+        let clazzy_ref = clazzy_ref.clone();
+        scheduler
+            .add(Job::new(date.0.as_str(), move |_uuid, _l| {
+                let pos = date.1;
+                let mut clazzy = clazzy_ref.try_lock().unwrap();
+
+                let class = &mut clazzy.clazz.semesters[pos.0].classes[pos.1];
+                let date = &mut class.dates[pos.2];
+
+                log::info!("Class '{}' active", class.name);
+            })?)
+            .await?;
+    }
+
+    scheduler.start().await?;
 
     loop {
         tokio::time::sleep(tokio::time::Duration::from_secs(100)).await;
     }
 }
 
-pub fn process_class(
-    clazzy_ref: Arc<Mutex<Clazzy>>,
-    pos: (usize, usize),
-) -> Result<(), ProgramError<'static>> {
-    let clazzy = clazzy_ref.lock().unwrap();
-    Ok(())
-}
-
 #[derive(Debug)]
-pub enum ProgramError<'a> {
-    MutexError(PoisonError<MutexGuard<'a, Clazzy>>),
+pub enum ProgramError {
     JobSchedulerError(JobSchedulerError),
     ClazzError(ClazzError),
     DeserializationError(DeserializationError),
+    StartLogger(SetLoggerError),
 }
 
-impl<'a> Error for ProgramError<'a> {}
-
-impl<'a> Display for ProgramError<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self {
-            e => {
-                write!(f, "{}", e)
-            }
+impl Error for ProgramError {}
+impl fmt::Display for ProgramError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ProgramError::JobSchedulerError(e) => write!(f, "Job scheduler error: {}", e),
+            ProgramError::ClazzError(e) => write!(f, "Clazz error: {}", e),
+            ProgramError::DeserializationError(e) => write!(f, "Deserialization error: {}", e),
+            ProgramError::StartLogger(e) => write!(f, "Logger error: {}", e),
         }
     }
 }
 
-impl<'a> From<JobSchedulerError> for ProgramError<'a> {
+impl From<JobSchedulerError> for ProgramError {
     fn from(e: JobSchedulerError) -> Self {
         return ProgramError::JobSchedulerError(e);
     }
 }
 
-impl<'a> From<PoisonError<MutexGuard<'a, Clazzy>>> for ProgramError<'a> {
-    fn from(e: PoisonError<MutexGuard<'a, Clazzy>>) -> Self {
-        return ProgramError::MutexError(e);
-    }
-}
-
-impl<'a> From<ClazzError> for ProgramError<'a> {
+impl From<ClazzError> for ProgramError {
     fn from(e: ClazzError) -> Self {
         return ProgramError::ClazzError(e);
     }
 }
 
-impl<'a> From<DeserializationError> for ProgramError<'a> {
+impl From<DeserializationError> for ProgramError {
     fn from(e: DeserializationError) -> Self {
         return ProgramError::DeserializationError(e);
     }
 }
+
+impl From<SetLoggerError> for ProgramError {
+    fn from(e: SetLoggerError) -> Self {
+        return ProgramError::StartLogger(e);
+    }
+}
+
