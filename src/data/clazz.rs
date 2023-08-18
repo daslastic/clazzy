@@ -1,10 +1,12 @@
-use crate::{data::raw_clazz::RawClazz, scheduler::ProgramError, ClazzTool};
+use crate::{data::raw_clazz::RawClazz, ClazzTool, ProgramError};
 use chrono::{NaiveDate, NaiveTime, ParseError, Weekday};
+use chrono_tz::Tz;
 use std::{error::Error, fmt};
 
 #[derive(Debug, Clone)]
 pub struct Clazz {
     pub semesters: Vec<Semestery>,
+    pub time_zone: Tz,
 }
 
 #[derive(Debug, Clone)]
@@ -34,6 +36,11 @@ pub struct Datey {
 
 pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ProgramError> {
     let mut semesters: Vec<Semestery> = Vec::new();
+
+    let time_zone: Tz = match raw_clazz.time_zone.parse() {
+        Ok(t) => t,
+        Err(e) => return Err(ClazzError::ParseTimezone(e))?,
+    };
 
     for raw_semester in raw_clazz.semesters.iter() {
         let mut classes: Vec<Class> = Vec::new();
@@ -81,13 +88,17 @@ pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ProgramError> {
         })
     }
 
-    Ok(Clazz { semesters })
+    Ok(Clazz {
+        time_zone,
+        semesters,
+    })
 }
 
 #[derive(Clone, Debug)]
 pub enum ClazzError {
     ParseSemTime(String, ParseError),
     ParseClassTime(String, ParseError),
+    ParseTimezone(String),
 }
 
 impl Error for ClazzError {}
@@ -100,6 +111,9 @@ impl fmt::Display for ClazzError {
             }
             ClazzError::ParseClassTime(s, e) => {
                 write!(f, "Invalid class time: {}. Error: {}.", s, e)
+            }
+            ClazzError::ParseTimezone(e) => {
+                write!(f, "Invalid timezone: {}.", e)
             }
         }
     }

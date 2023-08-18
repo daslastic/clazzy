@@ -1,112 +1,78 @@
-use std::{
-    error::Error,
-    fmt::{self, Pointer},
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
 use crate::{
-    data::{clazz::ClazzError, raw_clazz::DeserializationError},
-    Clazzy,
+    clazzy::{self},
+    data::clazz::Datey,
+    Clazzy, ProgramError,
 };
-use chrono::Timelike;
-use log::SetLoggerError;
-use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
 
-pub async fn start(clazzy_ref: Arc<Mutex<Clazzy>>) -> Result<(), ProgramError> {
-    let scheduler = JobScheduler::new().await?;
+use chrono::Local;
+use clokwerk::*;
+use std::{thread, time::Duration};
 
-    let mut dates: Vec<(String, (usize, usize, usize))> = Vec::new();
+pub fn start(clazzy_ref: Arc<Mutex<Clazzy>>) -> Result<(), ProgramError> {
+    let mut scheduler;
+    let mut dates: Vec<(Datey, (usize, usize, usize))> = Vec::new();
 
     {
-        let clazzy = clazzy_ref.try_lock().unwrap();
+        let mut clazzy = clazzy_ref.try_lock().unwrap();
+        let mut missing: Option<(usize, usize, usize)> = None;
         let sem_id = clazzy.sem_id.unwrap();
+
+        scheduler = Scheduler::with_tz(clazzy.clazz.time_zone);
+
+        let current_time = Local::now().with_timezone(&clazzy.clazz.time_zone).time();
+
         for (i, class) in clazzy.clazz.semesters[sem_id].classes.iter().enumerate() {
             for (o, date) in class.dates.iter().enumerate() {
                 let pos = (sem_id, i, o);
+                dates.push((date.clone(), pos));
 
-                let mut min = String::new();
-                min.push_str(&date.from.minute().to_string());
-                min.push('-');
-                min.push_str(&date.to.minute().to_string());
-
-                let mut hour = String::new();
-                hour.push_str(&date.from.hour().to_string());
-                hour.push('-');
-                hour.push_str(&date.to.hour().to_string());
-
-                let str = format!("* {} {} * * {}", min, hour, date.day.to_string());
-                log::info!("{}", str);
-
-                dates.push((str, pos));
+                if current_time >= date.from && current_time <= date.to {
+                    log::info!("You are missing class '{}'", class.name);
+                    missing = Some(pos);
+                }
             }
 
             log::info!("Class '{}' is setup!", class.name);
         }
+
+        if let Some(missing) = missing {
+            clazzy::start_class(&mut clazzy, missing);
+        }
     }
 
     for date in dates {
-        let clazzy_ref = clazzy_ref.clone();
-        scheduler
-            .add(Job::new(date.0.as_str(), move |_uuid, _l| {
-                let pos = date.1;
+        let day = clazzy::into_interval(date.0.day);
+        let id = date.1;
+
+        {
+            let clazzy_ref = clazzy_ref.clone();
+            scheduler.every(day).at_time(date.0.from).run(move || {
                 let mut clazzy = clazzy_ref.try_lock().unwrap();
+                clazzy::start_class(&mut clazzy, id);
+            });
+        }
 
-                let class = &mut clazzy.clazz.semesters[pos.0].classes[pos.1];
-                let date = &mut class.dates[pos.2];
-
-                log::info!("Class '{}' active", class.name);
-            })?)
-            .await?;
-    }
-
-    scheduler.start().await?;
-
-    loop {
-        tokio::time::sleep(tokio::time::Duration::from_secs(100)).await;
-    }
-}
-
-#[derive(Debug)]
-pub enum ProgramError {
-    JobSchedulerError(JobSchedulerError),
-    ClazzError(ClazzError),
-    DeserializationError(DeserializationError),
-    StartLogger(SetLoggerError),
-}
-
-impl Error for ProgramError {}
-impl fmt::Display for ProgramError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ProgramError::JobSchedulerError(e) => write!(f, "Job scheduler error: {}", e),
-            ProgramError::ClazzError(e) => write!(f, "Clazz error: {}", e),
-            ProgramError::DeserializationError(e) => write!(f, "Deserialization error: {}", e),
-            ProgramError::StartLogger(e) => write!(f, "Logger error: {}", e),
+        {
+            let clazzy_ref = clazzy_ref.clone();
+            scheduler.every(day).at_time(date.0.to).run(move || {
+                let mut clazzy = clazzy_ref.try_lock().unwrap();
+                clazzy::end_class(&mut clazzy, id);
+            });
         }
     }
-}
 
-impl From<JobSchedulerError> for ProgramError {
-    fn from(e: JobSchedulerError) -> Self {
-        return ProgramError::JobSchedulerError(e);
+    {
+        let clazzy_ref = clazzy_ref.clone();
+        scheduler.every(1.minute()).run(move || {
+            let mut clazzy = clazzy_ref.try_lock().unwrap();
+            clazzy::process_class(&mut clazzy);
+        });
+    }
+
+    loop {
+        scheduler.run_pending();
+        thread::sleep(Duration::from_millis(100));
     }
 }
-
-impl From<ClazzError> for ProgramError {
-    fn from(e: ClazzError) -> Self {
-        return ProgramError::ClazzError(e);
-    }
-}
-
-impl From<DeserializationError> for ProgramError {
-    fn from(e: DeserializationError) -> Self {
-        return ProgramError::DeserializationError(e);
-    }
-}
-
-impl From<SetLoggerError> for ProgramError {
-    fn from(e: SetLoggerError) -> Self {
-        return ProgramError::StartLogger(e);
-    }
-}
-

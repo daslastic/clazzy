@@ -1,13 +1,13 @@
-use crate::{scheduler::ProgramError, ClazzTool};
+use crate::{ClazzTool, ProgramError};
+use chrono::Weekday;
 use ron::de::from_reader;
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt, fs::File};
 
-use chrono::Weekday;
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RawClazz {
     pub semesters: Vec<Semester>,
+    pub time_zone: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
