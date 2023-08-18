@@ -1,5 +1,5 @@
 [package]
-name = "school-ai"
+name = "school-bot"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,3 +14,5 @@ serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 chrono-tz = "0.8"
 clokwerk = "0.4"
+notify-rust = "4.8.0"
+open = "5.0.0"

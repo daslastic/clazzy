@@ -1,11 +1,12 @@
 pub mod clazzy;
 pub mod data;
 pub mod error;
+pub mod notification;
 pub mod scheduler;
 
 use std::sync::{Arc, Mutex};
 
-pub use clazzy::{ClazzTool, Clazzy};
+pub use clazzy::{ClazzTool, Clazzy, DatePos};
 pub use error::ProgramError;
 
 fn main() {

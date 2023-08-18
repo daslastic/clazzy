@@ -1,0 +1,31 @@
+(
+  time_zone: "America/New_York",
+  notify_sound: Some("Blow"), // sound name or path(only linux)
+  warn_minutes: Some(5), // warn time before class
+  semesters: [
+    Semester(
+      from: "Aug 05, 2023",
+      to: "Dec 15, 2023",
+      classes: [
+        Class(
+          tool: Zoom,
+          name: "Big Math",
+          url: Some("https://us05web.zoom.us/j/85810507149?pwd=OPoSGMok2pzWQa9MzgPi5d4CK1uxhs.1"),
+          instructors: ["your mom"],
+          dates: [
+            Date(
+              day: "Tue",
+              from: "11:00",
+              to: "12:59",
+            ),
+            Date(
+              day: "Fri",
+              from: "19:13",
+              to: "19:20",
+            ),
+          ],
+        ),
+      ],
+    ),
+  ],
+)

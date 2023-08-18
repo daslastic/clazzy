@@ -1,4 +1,4 @@
-use crate::{data::raw_clazz::RawClazz, ClazzTool, ProgramError};
+use crate::{data::raw_clazz::RawClazz, ClazzTool};
 use chrono::{NaiveDate, NaiveTime, ParseError, Weekday};
 use chrono_tz::Tz;
 use std::{error::Error, fmt};
@@ -7,6 +7,8 @@ use std::{error::Error, fmt};
 pub struct Clazz {
     pub semesters: Vec<Semestery>,
     pub time_zone: Tz,
+    pub notify_sound: Option<String>,
+    pub warn_minutes: Option<i32>,
 }
 
 #[derive(Debug, Clone)]
@@ -18,13 +20,11 @@ pub struct Semestery {
 
 #[derive(Debug, Clone)]
 pub struct Class {
-    pub tool: ClazzTool,
     pub name: String,
-    pub password: String,
-    pub online: bool,
+    pub tool: ClazzTool,
     pub instructors: Vec<String>,
-    pub credits: f32,
     pub dates: Vec<Datey>,
+    pub url: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -34,7 +34,7 @@ pub struct Datey {
     pub to: NaiveTime,
 }
 
-pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ProgramError> {
+pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
     let mut semesters: Vec<Semestery> = Vec::new();
 
     let time_zone: Tz = match raw_clazz.time_zone.parse() {
@@ -65,12 +65,10 @@ pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ProgramError> {
             }
 
             classes.push(Class {
-                tool: raw_class.tool.clone(),
                 name: raw_class.name.clone(),
-                password: raw_class.password.clone(),
-                online: raw_class.online,
+                tool: raw_class.tool.clone(),
                 instructors: raw_class.instructors.clone(),
-                credits: raw_class.credits,
+                url: raw_class.url.clone(),
                 dates,
             });
         }
@@ -89,8 +87,10 @@ pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ProgramError> {
     }
 
     Ok(Clazz {
-        time_zone,
         semesters,
+        time_zone,
+        notify_sound: raw_clazz.notify_sound,
+        warn_minutes: raw_clazz.warn_minutes,
     })
 }
 
