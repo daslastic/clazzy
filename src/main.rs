@@ -26,8 +26,7 @@ fn main() {
 fn start() -> Result<(), ProgramError> {
     simple_logger::init_with_level(log::Level::Info)?;
 
-    let f = format!("{}/{}.ron", env!("CARGO_MANIFEST_DIR"), "conf");
-    let raw_clazz = data::raw_clazz::serialize_her(f)?;
+    let raw_clazz: data::raw_clazz::RawClazz = confy::load("clazzy", "conf")?;
     let clazz = data::clazz::make(raw_clazz)?;
     let clazzy = Arc::new(Mutex::new(Clazzy::new(clazz)));
 

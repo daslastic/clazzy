@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     data::clazz::{Class, Clazz, Datey},
-    notification,
+    notification, ProgramError,
 };
 use notify_rust::Notification;
 
@@ -114,12 +114,12 @@ pub fn end_class(clazzy: &mut Clazzy, id: DatePos) {
                 match current_class.class.tool {
                     ClazzTool::Zoom => {
                         if let Err(_) = Command::new("pkill").arg("zoom.us").output() {
-                            crate::error::runtime_error(crate::ProgramError::Kill("Zoom"));
+                            crate::error::runtime_error(ProgramError::Kill("Zoom"));
                         }
                     }
                     ClazzTool::Teams => {
                         if let Err(_) = Command::new("pkill").arg("Teams").output() {
-                            crate::error::runtime_error(crate::ProgramError::Kill("Teams"));
+                            crate::error::runtime_error(ProgramError::Kill("Teams"));
                         }
                     }
                 }

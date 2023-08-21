@@ -1,4 +1,5 @@
-use crate::data::{clazz::ClazzError, raw_clazz::DeserializationError};
+use crate::data::clazz::ClazzError;
+use confy::ConfyError;
 use log::SetLoggerError;
 use std::{
     error::Error,
@@ -8,7 +9,7 @@ use std::{
 #[derive(Debug)]
 pub enum ProgramError {
     ClazzError(ClazzError),
-    DeserializationError(DeserializationError),
+    DeserializationError(ConfyError),
     SetLogger(SetLoggerError),
     Notify(notify_rust::error::Error),
     Kill(&'static str),
@@ -33,8 +34,8 @@ impl From<ClazzError> for ProgramError {
     }
 }
 
-impl From<DeserializationError> for ProgramError {
-    fn from(e: DeserializationError) -> Self {
+impl From<ConfyError> for ProgramError {
+    fn from(e: ConfyError) -> Self {
         return ProgramError::DeserializationError(e);
     }
 }
