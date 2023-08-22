@@ -4,10 +4,10 @@ pub mod error;
 pub mod notification;
 pub mod scheduler;
 
-use std::sync::{Arc, Mutex};
-
 pub use clazzy::{ClazzTool, Clazzy, DatePos};
 pub use error::ProgramError;
+
+use std::sync::{Arc, Mutex};
 
 fn main() {
     match start() {

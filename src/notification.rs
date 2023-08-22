@@ -10,8 +10,8 @@ pub fn send_messege(clazzy: &mut Clazzy, title: String, msg: String) {
 }
 
 pub fn send_class_messege(clazzy: &mut Clazzy, msg: String) {
-    if let Some(current_class) = &clazzy.current_class {
-        send_messege(clazzy, current_class.class.name.clone(), msg);
+    if let Some(current_class) = clazzy.current_class.clone() {
+        send_messege(clazzy, current_class.borrow().class.name.clone(), msg);
     }
 }
 
