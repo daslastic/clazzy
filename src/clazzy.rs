@@ -51,7 +51,7 @@ impl Clazzy {
 }
 
 pub fn start_class(clazzy: &mut Clazzy, id: DatePos) {
-    match clazzy.current_class.clone() {
+    match &clazzy.current_class.clone() {
         Some(current_class) => {
             let class = &clazzy.clazz.semesters[id.0].classes[id.1];
             log::info!(
