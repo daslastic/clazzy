@@ -2,6 +2,7 @@ pub mod clazzy;
 pub mod data;
 pub mod error;
 pub mod notification;
+pub mod pretty_print;
 pub mod scheduler;
 
 pub use clazzy::{ClazzTool, Clazzy, DatePos};

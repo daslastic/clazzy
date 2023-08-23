@@ -2,8 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::{
     clazzy::{self},
-    data::clazz::Datey,
-    notification, Clazzy, ProgramError,
+    notification, pretty_print, Clazzy, ProgramError,
 };
 
 use chrono::Local;
@@ -12,13 +11,13 @@ use std::{thread, time::Duration};
 
 pub fn start(clazzy_ref: Arc<Mutex<Clazzy>>) -> Result<(), ProgramError> {
     let mut clazzy = clazzy_ref.lock().unwrap();
-    clazzy.sem_id = clazzy::is_semester(&clazzy);
     let mut scheduler = Scheduler::with_tz(clazzy.clazz.time_zone);
-    let current_time = Local::now().with_timezone(&clazzy.clazz.time_zone).time();
-    print_schedule(&mut clazzy);
+    clazzy.sem_id = clazzy::is_semester(&clazzy);
 
     if let Some(sem_id) = clazzy.sem_id {
         let mut is_late = false;
+        pretty_print::sexy(&mut clazzy);
+        let current_time = Local::now().with_timezone(&clazzy.clazz.time_zone).time();
         for (c, class) in clazzy.clazz.semesters[sem_id].classes.iter().enumerate() {
             for (d, date) in class.dates.iter().enumerate() {
                 let day = clazzy::into_interval(date.day);
@@ -91,45 +90,5 @@ pub fn start(clazzy_ref: Arc<Mutex<Clazzy>>) -> Result<(), ProgramError> {
 
         scheduler.run_pending();
         thread::sleep(Duration::from_secs(10));
-    }
-}
-
-pub fn print_schedule(clazzy: &mut Clazzy) {
-    let Some(sem_id) = clazzy::is_semester(clazzy) else { return };
-
-    const DIFF: &'static str = "                              ";
-    let mut classes: Vec<Vec<(String, Datey)>> = Vec::new();
-    for i in 0..6 {
-        classes.insert(i, Vec::new());
-    }
-
-    for class in clazzy.clazz.semesters[sem_id].classes.iter() {
-        for date in class.dates.iter() {
-            let day_id = date.day.num_days_from_monday() as usize;
-            if let Some(weekday) = classes.get_mut(day_id) {
-                weekday.push((class.name.clone(), date.clone()));
-            }
-        }
-    }
-
-    for i in 0..6 {
-        let days = &classes[i];
-        if let Some(weekday) = clazzy::into_weekday(i) {
-            if !days.is_empty() {
-                println!(
-                    "\n{}-{}-",
-                    DIFF.split_at(DIFF.len() / 2 - 2).0,
-                    weekday.to_string()
-                );
-                for date in days.iter() {
-                    println!(
-                        "{}:\n{}, {}",
-                        date.0,
-                        date.1.from.format("%I:%M %p"),
-                        date.1.to.format("%I:%M %p"),
-                    );
-                }
-            }
-        }
     }
 }

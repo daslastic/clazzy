@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, cell::RefCell, process::Command};
+use std::{cell::RefCell, process::Command};
 
 use chrono::{Local, Weekday};
 use clokwerk::Interval;
