@@ -25,6 +25,23 @@
             ),
           ],
         ),
+        Class(
+          tool: Zoom,
+          name: "Computer Programming",
+          instructors: ["your dad"],
+          dates: [
+            Date(
+              day: "Wed",
+              from: "1:00",
+              to: "2:59",
+            ),
+            Date(
+              day: "Tue",
+              from: "1:00",
+              to: "2:59",
+            ),
+          ],
+        ),
       ],
     ),
   ],
