@@ -8,7 +8,10 @@ const TIME_FORMAT: &'static str = "%I:%M %p";
 const DIFF: &'static str = "                              ";
 
 pub fn sexy(clazzy: &mut Clazzy) {
-    let Some(sem_id) = clazzy::is_semester(clazzy) else { return };
+    let Some(sem_id) = clazzy.is_semester() else {
+        log::info!("No semester applies to today :)");
+        return
+    };
 
     let mut classes: Vec<Vec<(String, Datey)>> = Vec::new();
     for i in 0..6 {
@@ -17,19 +20,15 @@ pub fn sexy(clazzy: &mut Clazzy) {
 
     for class in clazzy.clazz.semesters[sem_id].classes.iter() {
         for date in class.dates.iter() {
-            let day_id = date.day.num_days_from_monday() as usize;
-            if let Some(weekday) = classes.get_mut(day_id) {
-                weekday.push((class.name.clone(), date.clone()));
+            if let Some(days) = classes.get_mut(date.day.num_days_from_monday() as usize) {
+                days.push((class.name.clone(), date.clone()));
             }
         }
     }
 
-    for v in classes.iter_mut() {
-        v.sort_by_key(|(_, datey)| datey.from);
-    }
-
     for i in 0..6 {
-        let days = &classes[i];
+        let days = &mut classes[i];
+        days.sort_by_key(|(_, datey)| datey.from);
         if let Some(weekday) = clazzy::into_weekday(i) {
             if !days.is_empty() {
                 println!(
@@ -48,4 +47,9 @@ pub fn sexy(clazzy: &mut Clazzy) {
             }
         }
     }
+
+    println!(
+        "\n({}/{})",
+        clazzy.clazz.semesters[sem_id].from, clazzy.clazz.semesters[sem_id].to,
+    );
 }
