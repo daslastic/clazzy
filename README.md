@@ -14,10 +14,6 @@ This is a shitpost project I worked on to better understand Rust
 
 ## Setup
 
-**linux** -- _"~/.config/clazzy/conf.ron"_ \
-**mac** -- _"~/Library/Application Support/rs.clazzy/conf.ron"_ \
-**windows** -- _"idc idk ask ur %appdata%"_
-
 [conf.ron](conf.ron) -- sophisticated example config
 
 ## Licence
