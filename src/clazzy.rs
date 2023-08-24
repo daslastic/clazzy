@@ -88,6 +88,8 @@ impl Clazzy {
                         }
                     }
                 }
+
+                self.current_class = None;
             }
         }
     }
@@ -105,13 +107,9 @@ impl Clazzy {
         let now = Local::now().naive_local().date();
         for (i, sem) in self.clazz.semesters.iter().enumerate() {
             if now >= sem.from && now <= sem.to {
-                if self.sem_id.is_none() || self.sem_id.is_some() && i != self.sem_id.unwrap() {
-                    log::info!("Semester {}, is active. ({}/{})", i, sem.from, sem.to);
-                }
                 return Some(i);
             }
         }
-        log::info!("No semester applies to today :)");
         None
     }
 

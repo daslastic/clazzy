@@ -5,6 +5,7 @@ use crate::{
 };
 
 const TIME_FORMAT: &'static str = "%I:%M %p";
+const YEAR_FORMAT: &'static str = "%Y-%b-%d";
 const DIFF: &'static str = "                              ";
 
 pub fn sexy(clazzy: &mut Clazzy) {
@@ -49,7 +50,8 @@ pub fn sexy(clazzy: &mut Clazzy) {
     }
 
     println!(
-        "\n({}/{})",
-        clazzy.clazz.semesters[sem_id].from, clazzy.clazz.semesters[sem_id].to,
+        "\nFrom: {} to {}",
+        clazzy.clazz.semesters[sem_id].from.format(YEAR_FORMAT),
+        clazzy.clazz.semesters[sem_id].to.format(YEAR_FORMAT),
     );
 }
