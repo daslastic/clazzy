@@ -4,11 +4,11 @@ use crate::{
     Clazzy,
 };
 
-const TIME_FORMAT: &'static str = "%I:%M %p";
-const YEAR_FORMAT: &'static str = "%Y-%b-%d";
-const DIFF: &'static str = "                              ";
-
 pub fn sexy(clazzy: &mut Clazzy) {
+    const TIME_FORMAT: &str = "%I:%M %p";
+    const YEAR_FORMAT: &str = "%Y-%b-%d";
+    const DIFF: &str = "                              ";
+
     let Some(sem_id) = clazzy.is_semester() else {
         log::info!("No semester applies to today :)");
         return

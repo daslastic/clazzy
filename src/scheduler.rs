@@ -18,8 +18,6 @@ pub fn start(clazzy_ref: Arc<Mutex<Clazzy>>) -> Result<(), ProgramError> {
         clazzy.sem_id = clazzy.is_semester();
 
         pretty_print::sexy(&mut clazzy);
-        let path = confy::get_configuration_file_path("clazzy", "conf")?;
-        log::info!("{:?}", path);
 
         if let Some(sem_id) = clazzy.sem_id {
             let local = Local::now().with_timezone(&clazzy.clazz.time_zone);

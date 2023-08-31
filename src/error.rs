@@ -20,7 +20,14 @@ impl fmt::Display for ProgramError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ProgramError::ClazzError(e) => write!(f, "Clazz error: {}", e),
-            ProgramError::DeserializationError(e) => write!(f, "Deserialization error: {}", e),
+            ProgramError::DeserializationError(e) => match e {
+                ConfyError::BadRonData(e) => {
+                    write!(f, "Syntax error: {}", e)
+                }
+                _ => {
+                    write!(f, "{}", e)
+                }
+            },
             ProgramError::SetLogger(e) => write!(f, "Logger error: {}", e),
             ProgramError::Notify(e) => write!(f, "Sending notification failed: {}", e),
             ProgramError::Kill(s) => write!(f, "Failed to kill process '{}'", s),

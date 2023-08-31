@@ -9,27 +9,31 @@ pub use error::ProgramError;
 
 use std::sync::{Arc, Mutex};
 
+pub const APP_NAME: &'static str = "clazzy";
+pub const CONFIG: &'static str = "conf";
+
 fn main() {
-    match start() {
-        Err(e) => match e {
+    if let Err(e) = start() {
+        match e {
             ProgramError::SetLogger(e) => {
                 println!("{}", e);
             }
             _ => {
                 log::error!("{}", e);
             }
-        },
-        _ => {}
+        }
     }
 }
 
 fn start() -> Result<(), ProgramError> {
     simple_logger::init_with_level(log::Level::Info)?;
 
-    let raw_clazz: data::raw_clazz::RawClazz = confy::load("clazzy", "conf")?;
+    let raw_clazz: data::raw_clazz::RawClazz = confy::load(APP_NAME, CONFIG)?;
+    let path = confy::get_configuration_file_path(APP_NAME, CONFIG)?;
     let clazz = data::clazz::make(raw_clazz)?;
     let clazzy = Arc::new(Mutex::new(Clazzy::new(clazz)));
 
+    log::info!("{:?}", path);
     scheduler::start(clazzy)?;
 
     Ok(())
