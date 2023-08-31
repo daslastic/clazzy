@@ -62,7 +62,6 @@ impl Clazzy {
             self.current_class =
                 Some(CurrentClass::new(class.clone(), class.dates[id.2].clone()).into());
             log::info!("Class '{}' started!", &class.name);
-            self.join_class();
         }
     }
 
@@ -73,22 +72,6 @@ impl Clazzy {
             if current_class.borrow().class.name == class.name {
                 log::info!("Class '{}' ended!", class.name);
                 self.send_class_messege(format!("Class has ended"));
-
-                if current_class.borrow().class.url.is_some() {
-                    match current_class.borrow().class.tool {
-                        ClazzTool::Zoom => {
-                            if let Err(_) = Command::new("pkill").arg("zoom.us").output() {
-                                crate::error::runtime_error(ProgramError::Kill("Zoom"));
-                            }
-                        }
-                        ClazzTool::Teams => {
-                            if let Err(_) = Command::new("pkill").arg("Teams").output() {
-                                crate::error::runtime_error(ProgramError::Kill("Teams"));
-                            }
-                        }
-                    }
-                }
-
                 self.current_class = None;
             }
         }
@@ -120,25 +103,6 @@ impl Clazzy {
             true
         } else {
             false
-        }
-    }
-
-    pub fn join_class(&mut self) {
-        if let Some(current_class) = self.current_class.clone() {
-            if let Some(url) = &current_class.borrow().class.url {
-                match open::that(url) {
-                    Ok(_) => {
-                        self.send_class_messege(format!("Class opened in browser"));
-                        log::info!("Opened class in web browser");
-                    }
-                    Err(e) => {
-                        self.send_class_messege(format!("Failed to open class! {}", e));
-                        log::info!("Failed to open class");
-                    }
-                }
-            } else {
-                self.send_class_messege(format!("Class has began"));
-            }
         }
     }
 

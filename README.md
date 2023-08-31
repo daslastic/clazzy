@@ -5,12 +5,11 @@ This is a shitpost project I worked on to better understand Rust
 
 # About
 
-## Features
+### Features
 
 - sexy config w/ good options yes
 - sends reminders
-- schedule output
-- implements the most advanced auto-join and leave system in existence. **(open & pkill)**
+- fancyish schedule output
 
 ## Setup
 

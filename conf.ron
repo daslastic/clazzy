@@ -10,7 +10,6 @@
         Class(
           tool: Zoom,
           name: "Big Math",
-          url: Some("https://us05web.zoom.us/j/85810507149?pwd=OPoSGMok2pzWQa9MzgPi5d4CK1uxhs.1"),
           instructors: ["your mom"],
           dates: [
             Date(
