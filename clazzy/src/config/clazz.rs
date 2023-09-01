@@ -1,4 +1,4 @@
-use crate::{data::raw_clazz::RawClazz, ClazzTool};
+use crate::RawClazz;
 use chrono::{NaiveDate, NaiveTime, ParseError, Weekday};
 use chrono_tz::Tz;
 use std::{error::Error, fmt};
@@ -21,7 +21,6 @@ pub struct Semestery {
 #[derive(Debug, Clone)]
 pub struct Class {
     pub name: String,
-    pub tool: ClazzTool,
     pub instructors: Vec<String>,
     pub dates: Vec<Datey>,
     pub url: Option<String>,
@@ -32,6 +31,31 @@ pub struct Datey {
     pub day: Weekday,
     pub from: NaiveTime,
     pub to: NaiveTime,
+}
+
+#[derive(Clone, Debug)]
+pub enum ClazzError {
+    ParseSemTime(String, ParseError),
+    ParseClassTime(String, ParseError),
+    ParseTimezone(String),
+}
+
+impl Error for ClazzError {}
+
+impl fmt::Display for ClazzError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self {
+            ClazzError::ParseSemTime(s, e) => {
+                write!(f, "Invalid semester time: {}. Error: {}.", s, e)
+            }
+            ClazzError::ParseClassTime(s, e) => {
+                write!(f, "Invalid class time: {}. Error: {}.", s, e)
+            }
+            ClazzError::ParseTimezone(e) => {
+                write!(f, "Invalid timezone: {}.", e)
+            }
+        }
+    }
 }
 
 pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
@@ -66,7 +90,6 @@ pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
 
             classes.push(Class {
                 name: raw_class.name.clone(),
-                tool: raw_class.tool.clone(),
                 instructors: raw_class.instructors.clone(),
                 url: raw_class.url.clone(),
                 dates,
@@ -92,29 +115,4 @@ pub fn make(raw_clazz: RawClazz) -> Result<Clazz, ClazzError> {
         notify_sound: raw_clazz.notify_sound,
         warn_minutes: raw_clazz.warn_minutes,
     })
-}
-
-#[derive(Clone, Debug)]
-pub enum ClazzError {
-    ParseSemTime(String, ParseError),
-    ParseClassTime(String, ParseError),
-    ParseTimezone(String),
-}
-
-impl Error for ClazzError {}
-
-impl fmt::Display for ClazzError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &self {
-            ClazzError::ParseSemTime(s, e) => {
-                write!(f, "Invalid semester time: {}. Error: {}.", s, e)
-            }
-            ClazzError::ParseClassTime(s, e) => {
-                write!(f, "Invalid class time: {}. Error: {}.", s, e)
-            }
-            ClazzError::ParseTimezone(e) => {
-                write!(f, "Invalid timezone: {}.", e)
-            }
-        }
-    }
 }

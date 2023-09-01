@@ -1,6 +1,6 @@
 use crate::{
     clazzy::{self},
-    data::clazz::Datey,
+    config::Datey,
     Clazzy,
 };
 

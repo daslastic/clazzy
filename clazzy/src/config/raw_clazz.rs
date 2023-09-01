@@ -1,5 +1,7 @@
-use crate::ClazzTool;
+use std::path::PathBuf;
+
 use chrono::Weekday;
+use confy::ConfyError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -30,7 +32,6 @@ pub struct Semester {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Class {
-    pub tool: ClazzTool,
     pub name: String,
     pub dates: Vec<Date>,
     pub instructors: Vec<String>,

@@ -1,0 +1,18 @@
+[package]
+name = "clazzy"
+version = { workspace = true }
+edition = "2021"
+
+[dependencies]
+log = "0.4"
+simple_logger = "4.2"
+chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = "0.8"
+clokwerk = "0.4"
+notify-rust = "4.8"
+ron = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"
+confy = { version = "0.5", features = ["ron_conf"], default-features = false }
+
+clazzy_bot = { workspace = true }

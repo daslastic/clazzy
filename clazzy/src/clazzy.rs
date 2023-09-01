@@ -1,20 +1,13 @@
-use std::{cell::RefCell, process::Command};
+use std::cell::RefCell;
 
 use chrono::{Local, Weekday};
 use clokwerk::Interval;
 use notify_rust::Notification;
-use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::clazz::{Class, Clazz, Datey},
+    config::{Class, Clazz, Datey},
     ProgramError,
 };
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub enum ClazzTool {
-    Zoom,
-    Teams,
-}
 
 pub type DatePos = (usize, usize, usize);
 

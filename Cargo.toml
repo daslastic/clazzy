@@ -1,17 +1,10 @@
-[package]
-name = "clazzy"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = ["clazzy", "clazzy_bot"]
+resolver = "2"
 
-[dependencies]
-log = "0.4"
-simple_logger = "4.2"
-ron = "0.8"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1.0"
-chrono = { version = "0.4", features = ["serde"] }
-chrono-tz = "0.8"
-clokwerk = "0.4"
-notify-rust = "4.8"
-open = "5.0"
-confy = { version = "0.5", features = ["ron_conf"], default-features = false }
+[workspace.package]
+version = "0.1.1"
+
+[workspace.dependencies]
+clazzy = { path = "./clazzy", version = "0.1.1" }
+clazzy_bot = { path = "./clazzy_bot", version = "0.1.0" }

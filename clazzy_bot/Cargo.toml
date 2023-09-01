@@ -1,0 +1,7 @@
+[package]
+name = "clazzy_bot"
+version = { workspace = true }
+edition = "2021"
+
+[dependencies]
+[lib]

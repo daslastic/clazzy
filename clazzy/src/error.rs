@@ -1,4 +1,4 @@
-use crate::data::clazz::ClazzError;
+use crate::config::ClazzError;
 use confy::ConfyError;
 use log::SetLoggerError;
 use std::{
